@@ -52,7 +52,7 @@ func (s *httpServer) handleProduce(w http.ResponseWriter, r *http.Request) {
         http.Error(w, err.Error(), http.StatusInternalServerError)
     }
     res := ProduceResponse {Offset: off}
-    err = json.NewDecoder(r.Body).Decode(&res)
+    err = json.NewEncoder(w).Encode(&res)
 
     if err != nil{
         http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -76,14 +76,16 @@ func (s *httpServer) handleConsume(w http.ResponseWriter, r *http.Request) {
 
     if err == ErrOffsetNotFound {
         http.Error(w, err.Error(), http.StatusNotFound)
+        return
     }
 
     if err != nil{
         http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
     }
 
     res := ConsumeResponse{Record: rec}
-    err = json.NewDecoder(r.Body).Decode(&res)
+    err = json.NewEncoder(w).Encode(&res)
 
     if err != nil{
         http.Error(w, err.Error(), http.StatusInternalServerError)
