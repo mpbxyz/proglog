@@ -39,7 +39,7 @@ func newSegment(dir string, baseOffset uint64, c Config)(*segment, error){
 
     indexFile, err := os.OpenFile(
         path.Join(dir, fmt.Sprintf("%d%s", baseOffset, ".index")),
-        os.O_RDWR|os.O_CREATE|os.O_APPEND,
+        os.O_RDWR|os.O_CREATE,
         0644,
     )
     if err != nil{
@@ -85,7 +85,7 @@ func (s *segment) Append(record *api.Record) (offset uint64, err error){
 }
 
 func (s *segment) Read(offset uint64)(*api.Record, error){
-    _, pos, err := s.index.Read(int64(offset))
+    _, pos, err := s.index.Read(int64(offset - s.baseOffset))
     if err != nil {
         return nil, err
     }
