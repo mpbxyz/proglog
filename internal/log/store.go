@@ -3,7 +3,6 @@ package log
 import (
 	"bufio"
 	"encoding/binary"
-	"log"
 	"os"
 	"sync"
 )
