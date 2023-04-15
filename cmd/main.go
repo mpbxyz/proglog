@@ -5,7 +5,8 @@ import (
 
 	"github.com/mpbxyz/proglog/internal/server"
 )
-func main(){
-    svr := server.NewHTTPServer(":8080")
-    log.Fatal(svr.ListenAndServe())
+
+func main() {
+	svr := server.NewHTTPServer(":8080")
+	log.Fatal(svr.ListenAndServe())
 }
