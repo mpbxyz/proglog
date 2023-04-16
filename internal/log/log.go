@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -178,7 +179,29 @@ func (l *Log) newSegment(off uint64)error{
         return nil
     }
 
-        l.segments = append(l.segments, seg)
+    l.segments = append(l.segments, seg)
     l.activeSegment = seg
     return nil
+}
+
+func (l *Log) Reader() io.Reader {
+    l.mu.RLock()
+    defer l.mu.RUnlock()
+
+    readers := make([]io.Reader, len(l.segments))
+    for i, segment := range l.segments {
+        readers[i] = &originReader{segment.store, 0}
+    }
+    return io.MultiReader(readers...)
+}
+
+type originReader struct{
+    *store
+    off int64
+}
+
+func (o *originReader) Read(p []byte) (int, error)  {
+    n, err := o.ReadAt(p, o.off)
+    o.off += int64(n)
+    return n, err
 }
