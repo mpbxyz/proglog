@@ -8,7 +8,6 @@ import (
 	api "github.com/mpbxyz/proglog/api/v1"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
-	//"google.golang.org/protobuf/proto"
 )
 
 func TestLog(t *testing.T)  {
@@ -19,6 +18,7 @@ func TestLog(t *testing.T)  {
         "validates out of range error happens": testOutOfRange,
         "Init with existing segments": testInitExisting,
         "Test reader": testReader,
+        "Test that truncate equals right size": testTruncate,
     }{
         t.Run(scenario, func(t *testing.T) {
             dir, err := ioutil.TempDir("", "store-test")
@@ -107,6 +107,22 @@ func testReader(t *testing.T, log *Log)  {
 
     require.NoError(t, err)
     require.Equal(t, write.Value, read.Value)
-
 }
 
+func testTruncate(t *testing.T, log *Log){
+        
+    write := &api.Record {
+       Value: []byte("Hello World"), 
+    }
+
+    for i := 0; i < 3; i++ {
+        _, err := log.Append(write)
+        require.NoError(t, err)
+    }
+
+    err := log.Truncate(1)
+    require.NoError(t, err)
+
+    Base,err := log.LowestOffset()
+    require.Equal(t, uint64(2), Base)
+}
