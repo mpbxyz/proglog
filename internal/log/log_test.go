@@ -7,6 +7,7 @@ import (
 
 	api "github.com/mpbxyz/proglog/api/v1"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	//"google.golang.org/protobuf/proto"
 )
 
@@ -17,6 +18,7 @@ func TestLog(t *testing.T)  {
         "append and read a record succeeds": testAppendRead,
         "validates out of range error happens": testOutOfRange,
         "Init with existing segments": testInitExisting,
+        "Test reader": testReader,
     }{
         t.Run(scenario, func(t *testing.T) {
             dir, err := ioutil.TempDir("", "store-test")
@@ -56,4 +58,55 @@ func testOutOfRange(t *testing.T, log *Log){
 }
 
 func testInitExisting(t *testing.T, log *Log)  {
+    write := &api.Record {
+       Value: []byte("Hello World"), 
+    }
+
+    for i := 0; i < 3; i++ {
+        _, err := log.Append(write)
+        require.NoError(t, err)
+    }
+
+    require.NoError(t, log.Close())
+    
+    off, err := log.LowestOffset()
+    require.NoError(t, err)
+    require.Equal(t, uint64(0), off)
+
+    off, err = log.HighestOffset()
+    require.NoError(t, err)
+    require.Equal(t, uint64(2), off)
+    
+    n, err := newLog(log.Dir, log.Config)
+
+    require.NoError(t, n.Close())
+    
+    off, err = n.LowestOffset()
+    require.NoError(t, err)
+    require.Equal(t, uint64(0), off)
+
+    off, err = n.HighestOffset()
+    require.NoError(t, err)
+    require.Equal(t, uint64(2), off)
+} 
+
+func testReader(t *testing.T, log *Log)  {
+    write := &api.Record {
+       Value: []byte("Hello World"), 
+    }
+    off, err := log.Append(write)
+    require.NoError(t, err)
+    require.Equal(t, uint64(0), off)
+
+    reader := log.Reader()
+
+    b, err := ioutil.ReadAll(reader)
+    require.NoError(t, err)
+    read := &api.Record{}
+    err = proto.Unmarshal(b[lenWidth:], read)
+
+    require.NoError(t, err)
+    require.Equal(t, write.Value, read.Value)
+
 }
+
